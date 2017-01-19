@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -39,6 +40,59 @@ namespace DataAnalyser
             catch (Exception)
             {
                 return;
+            }
+        }
+
+        public static string GetHtmlFileAsString()
+        {
+            string resourceName = " ";
+
+            Assembly asa = Assembly.GetExecutingAssembly();
+            foreach (var name in asa.GetManifestResourceNames())
+            {
+                if (name.Contains("template.html"))
+                {
+                    resourceName = name;
+                }
+            }
+
+            var assembly = Assembly.GetExecutingAssembly();
+
+            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                string result = reader.ReadToEnd();
+                reader.Close();
+
+                return result;               
+            }
+        }
+
+        public static void ExtractEmbeddedResource(string outputDir)
+        {
+            string resourceName = " ";
+
+            Assembly asa = Assembly.GetExecutingAssembly();
+            foreach (var name in asa.GetManifestResourceNames())
+            {
+                if (name.Contains("icon.ico"))
+                {
+                    resourceName = name;
+                }
+            }
+
+            var assembly = Assembly.GetExecutingAssembly();
+            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            {
+
+                using (System.IO.FileStream fileStream = new FileStream(Path.Combine(outputDir, "icon.ico"), FileMode.Create))
+                {
+                    for (int i = 0; i < stream.Length; i++)
+                    {
+                        fileStream.WriteByte((byte)stream.ReadByte());
+                    }
+                    fileStream.Close();
+                }
             }
         }
 
@@ -138,17 +192,15 @@ namespace DataAnalyser
             try
             {
                 var serverDirectory = ConfigurationManager.AppSettings["ServerDirectory"];
-
-                var htmlStreamReader = new StreamReader(directory + @"\HtmlPage\template.html");
-                string htmlFile = htmlStreamReader.ReadToEnd();
-                htmlStreamReader.Close();
-
+                
+                string htmlFile = GetHtmlFileAsString();
+                
                 htmlFile = MergeTextInAHtmlFile(htmlFile, finalResult);
 
                 if (serverDirectory != "default")
                 {
                     StreamWriter strWriter = File.AppendText(serverDirectory + @"\index.html");
-                    CopyFileAndHandleException(directory + @"\HtmlPage\icon.ico", serverDirectory + @"\icon.ico");
+                    ExtractEmbeddedResource(serverDirectory);
 
                     strWriter.Close();
 
@@ -156,18 +208,17 @@ namespace DataAnalyser
                 }
                 else
                 {
-                    StreamWriter strWriter = File.AppendText(directory + @"\HtmlPage\index.html");
+                    StreamWriter strWriter = File.AppendText(directory + @"\index.html");
                     
                     strWriter.Close();
 
-                    File.WriteAllText(directory + @"\HtmlPage\index.html", htmlFile);
+                    File.WriteAllText(directory + @"\index.html", htmlFile);
                 }
             }
             catch (Exception)
             {
                 return;
-            }
-            
+            }       
         }
     }
 }
