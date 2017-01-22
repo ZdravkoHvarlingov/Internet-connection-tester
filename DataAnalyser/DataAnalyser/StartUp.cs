@@ -211,7 +211,7 @@ namespace DataAnalyser
                     StreamWriter strWriter = File.AppendText(directory + @"\index.html");
                     
                     strWriter.Close();
-
+                    ExtractEmbeddedResource(directory);
                     File.WriteAllText(directory + @"\index.html", htmlFile);
                 }
             }
