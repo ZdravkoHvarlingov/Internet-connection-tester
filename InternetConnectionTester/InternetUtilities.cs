@@ -66,6 +66,8 @@ namespace InternetConnectionTester
 
         public static bool SendDataToServer(string content)
         {
+            content = "InternetLogStream2017" + content;
+
             try
             {
                 var ip = ConfigurationManager.AppSettings["IPtoConnect"];

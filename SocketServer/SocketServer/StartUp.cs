@@ -15,6 +15,7 @@ namespace SocketServer
     {
         static void Main(string[] args)
         {
+            const int startingIndex = 21;
             string neededPort = ConfigurationManager.AppSettings["InternetPort"];
 
             TcpListener serverSocket = new TcpListener(IPAddress.Any, int.Parse(neededPort));
@@ -25,25 +26,36 @@ namespace SocketServer
 
             while (true)
             {
-                clientSocket = serverSocket.AcceptTcpClient();
-                Console.WriteLine("Connection accepted.");
+                try
+                {
+                    clientSocket = serverSocket.AcceptTcpClient();
+                    Console.WriteLine("Connection accepted.");
 
-                string dataFromClient = null;
+                    string dataFromClient = null;
 
-                NetworkStream networkStream = clientSocket.GetStream();
+                    NetworkStream networkStream = clientSocket.GetStream();
 
-                var bytesFrom = new byte[clientSocket.ReceiveBufferSize];
-                int data = networkStream.Read(bytesFrom, 0, clientSocket.ReceiveBufferSize);
-                dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom, 0, data);
+                    var bytesFrom = new byte[clientSocket.ReceiveBufferSize];
+                    int data = networkStream.Read(bytesFrom, 0, clientSocket.ReceiveBufferSize);
+                    dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom, 0, data);
 
-                FileUtilities.LogMessageToFile(dataFromClient, DateTime.Now);
+                    if (dataFromClient.StartsWith("InternetLogStream2017"))
+                    {
+                        dataFromClient = dataFromClient.Substring(startingIndex);
+                        FileUtilities.LogMessageToFile(dataFromClient, DateTime.Now);
+                    }
 
-                clientSocket.Close();
+                    clientSocket.Close();
 
-                Console.WriteLine("Client disconnected.");
+                    Console.WriteLine("Client disconnected.");
+                }
+                catch (Exception)
+                {
+                    clientSocket.Close();
+                }
+
             }
 
-            clientSocket.Close();
             serverSocket.Stop();
         }
     }
